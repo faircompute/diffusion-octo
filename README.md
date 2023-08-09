@@ -3,11 +3,11 @@
 1. Install [OctoAI Tool and Python SDK](https://docs.octoai.cloud/docs/installation-links)
 1. Build image with:
     ```bash
-    octoai build
+    octoai build --setup
     ```
 1. Run image with:
     ```bash
-    docker run -it --rm --gpus all -p 8080:8080 faircompute/diffusion-octo:<tag from previous step> 
+    docker run -it --rm --gpus all -p 8080:8080 hub.docker.com/faircompute/diffusion-octo:<tag from previous step> 
     ```
 1. Launch test request via:
     ```bash

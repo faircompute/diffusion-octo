@@ -17,7 +17,8 @@ class DiffusionOctoService(Service):
         print(f'Model loaded in {(time.time() - start_time) * 1000:.2f}ms')
         DiffusionPipeline.download("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, revision="fp16")
         pipe = DiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, revision="fp16")
-        self.pipe = pipe.to('cuda')
+        if torch.cuda.is_available():
+            self.pipe = pipe.to('cuda')
 
     def infer(self, prompt: Text) -> Image:
         """Run a single prediction on the model"""
