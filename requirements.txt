@@ -1,0 +1,5 @@
+torch==2.0.1
+accelerate==0.20.3
+diffusers==0.17.1
+huggingface==0.0.1
+transformers==4.30.2
