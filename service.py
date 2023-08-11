@@ -7,6 +7,10 @@ from octoai.types import Image, Text
 
 
 class DiffusionOctoService(Service):
+    # It takes a lot of time to compile the model on the first run
+    # The speed-up as tested on 4070Ti is insignificant
+    run_compile = False
+
     """An OctoAI service extends octoai.service.Service."""
     def __init__(self):
         self.pipe = None
@@ -16,9 +20,13 @@ class DiffusionOctoService(Service):
         start_time = time.time()
         print(f'Model loaded in {(time.time() - start_time) * 1000:.2f}ms')
         DiffusionPipeline.download("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, revision="fp16")
-        pipe = DiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, revision="fp16")
+        self.pipe = DiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, revision="fp16")
         if torch.cuda.is_available():
-            self.pipe = pipe.to('cuda')
+            self.pipe = self.pipe.to('cuda')
+            cuda_capability = torch.cuda.get_device_capability(device=None)
+            if self.run_compile and cuda_capability[0] >= 7:
+                self.pipe.unet.to(memory_format=torch.channels_last)
+                self.pipe.unet = torch.compile(self.pipe.unet, mode="reduce-overhead", fullgraph=True)
 
     def infer(self, prompt: Text) -> Image:
         """Run a single prediction on the model"""
