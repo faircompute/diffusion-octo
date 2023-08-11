@@ -2,5 +2,6 @@ endpoint_config:
   name: diffusion-octo
   hardware: gpu.a10g.medium
   registry:
-    host: hub.docker.com
-    path: faircompute/diffusion-octo
+    host: faircompute
+    path: diffusion-octo
+    tag: latest

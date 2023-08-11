@@ -1,4 +1,5 @@
-torch==2.0.1
+# need PyTorch 2.0.1 with CUDA 11.8 to get best performance, default is CUDA 11.6
+torch @ https://download.pytorch.org/whl/cu118/torch-2.0.1%2Bcu118-cp310-cp310-linux_x86_64.whl
 accelerate==0.20.3
 diffusers==0.17.1
 huggingface==0.0.1

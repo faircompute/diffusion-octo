@@ -7,7 +7,7 @@
     ```
 1. Run image with:
     ```bash
-    docker run -it --rm --gpus all -p 8080:8080 hub.docker.com/faircompute/diffusion-octo:<tag from previous step> 
+    docker run -it --rm --gpus all -p 8080:8080 faircompute/diffusion-octo:latest
     ```
 1. Launch test request via:
     ```bash
@@ -15,6 +15,5 @@
     ```
 1. Push to docker hub using:
     ```bash
-    docker image tag hub.docker.com/faircompute/diffusion-octo:<tag from previous step> faircompute/diffusion-octo:latest
     docker push faircompute/diffusion-octo:latest
     ```
