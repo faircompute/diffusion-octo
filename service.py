@@ -4,6 +4,37 @@ import torch
 from diffusers import DiffusionPipeline
 from octoai.service import Service
 from octoai.types import Image, Text
+from threading import Lock, Thread
+import time
+import os
+
+
+class AutoExit(Thread):
+    def __init__(self):
+        super().__init__()
+        self.last_active = time.time()
+        self.max_active_time = 60*10
+        self.mutex = Lock()
+
+    def remaining_active_time(self):
+        self.mutex.acquire()
+        active_time = time.time() - self.last_active
+        time_left = self.max_active_time - active_time
+        self.mutex.release()
+        return time_left
+
+    def update_activity(self):
+        self.mutex.acquire()
+        self.last_active = time.time()
+        self.mutex.release()
+
+    def run(self):
+        while True:
+            time_left = self.remaining_active_time()
+            if time_left >= 0:
+                time.sleep(time_left + 10)
+            else:
+                os._exit(0)
 
 
 class DiffusionOctoService(Service):
@@ -13,6 +44,7 @@ class DiffusionOctoService(Service):
 
     """An OctoAI service extends octoai.service.Service."""
     def __init__(self):
+        super().__init__()
         self.pipe = None
 
     def setup(self):
@@ -28,8 +60,13 @@ class DiffusionOctoService(Service):
                 self.pipe.unet.to(memory_format=torch.channels_last)
                 self.pipe.unet = torch.compile(self.pipe.unet, mode="reduce-overhead", fullgraph=True)
 
+        self.auto_exit = AutoExit()
+        self.auto_exit.start()
+        self.auto_exit.update_activity()
+
     def infer(self, prompt: Text) -> Image:
         """Run a single prediction on the model"""
+        self.auto_exit.update_activity()
         prompt = prompt.text
         print("Prompt:", prompt)
         print(f"Running on '{torch.cuda.get_device_name()}'")
