@@ -2,6 +2,7 @@ import time
 
 import torch
 from diffusers import DiffusionPipeline
+import signal
 from octoai.service import Service
 from octoai.types import Image, Text
 from threading import Lock, Thread
@@ -10,10 +11,11 @@ import os
 
 
 class AutoExit(Thread):
-    def __init__(self):
+    def __init__(self, start_pid):
         super().__init__()
+        self.start_pid = start_pid
         self.last_active = time.time()
-        self.max_active_time = 60*10
+        self.max_active_time = 60*20
         self.mutex = Lock()
 
     def remaining_active_time(self):
@@ -34,6 +36,9 @@ class AutoExit(Thread):
             if time_left >= 0:
                 time.sleep(time_left + 10)
             else:
+                print("Auto exit")
+                print(f"Exit PID {os.getpid()}")
+                os.kill(self.start_pid, signal.SIGTERM)
                 os._exit(0)
 
 
@@ -46,6 +51,8 @@ class DiffusionOctoService(Service):
     def __init__(self):
         super().__init__()
         self.pipe = None
+        self.start_pid = os.getpid()
+        print(f"init PID {os.getpid()}")
 
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
@@ -59,8 +66,8 @@ class DiffusionOctoService(Service):
             if self.run_compile and cuda_capability[0] >= 7:
                 self.pipe.unet.to(memory_format=torch.channels_last)
                 self.pipe.unet = torch.compile(self.pipe.unet, mode="reduce-overhead", fullgraph=True)
-
-        self.auto_exit = AutoExit()
+        print(f"setup PID {os.getpid()}")
+        self.auto_exit = AutoExit(start_pid=self.start_pid)
         self.auto_exit.start()
         self.auto_exit.update_activity()
 
@@ -72,5 +79,7 @@ class DiffusionOctoService(Service):
         print(f"Running on '{torch.cuda.get_device_name()}'")
         start_time = time.time()
         image = self.pipe(prompt, num_inference_steps=30).images[0]
+        # image = Image.new("RGBA", (640, 480))
+        # time.sleep(3)
         print(f"Inference done in {(time.time() - start_time) * 1000:.2f}ms")
         return Image.from_pil(image)
