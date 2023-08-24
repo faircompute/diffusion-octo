@@ -68,13 +68,15 @@ class DiffusionOctoService(Service):
                 self.pipe.unet.to(memory_format=torch.channels_last)
                 self.pipe.unet = torch.compile(self.pipe.unet, mode="reduce-overhead", fullgraph=True)
         print(f"setup PID {os.getpid()}")
-        self.auto_exit = AutoExit(start_pid=self.start_pid)
-        self.auto_exit.start()
-        self.auto_exit.update_activity()
+        if os.environ.get('NO_AUTO_EXIT', None) is not None:
+            self.auto_exit = AutoExit(start_pid=self.start_pid)
+            self.auto_exit.start()
+            self.auto_exit.update_activity()
 
     def infer(self, prompt: Text) -> Image:
         """Run a single prediction on the model"""
-        self.auto_exit.update_activity()
+        if self.auto_exit is not None:
+            self.auto_exit.update_activity()
         prompt = prompt.text
         print("Prompt:", prompt)
         print(f"Running on '{torch.cuda.get_device_name()}'")
