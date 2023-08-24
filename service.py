@@ -52,13 +52,14 @@ class DiffusionOctoService(Service):
         super().__init__()
         self.pipe = None
         self.start_pid = os.getpid()
+        self.auto_exit = None
         print(f"init PID {os.getpid()}")
 
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
         start_time = time.time()
-        print(f'Model loaded in {(time.time() - start_time) * 1000:.2f}ms')
         DiffusionPipeline.download("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, revision="fp16")
+        print(f'Model loaded in {(time.time() - start_time) * 1000:.2f}ms')
         self.pipe = DiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, revision="fp16")
         if torch.cuda.is_available():
             self.pipe = self.pipe.to('cuda')
