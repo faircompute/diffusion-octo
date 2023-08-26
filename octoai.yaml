@@ -4,4 +4,4 @@ endpoint_config:
   registry:
     host: faircompute
     path: diffusion-octo
-    tag: latest
+    tag: v1
